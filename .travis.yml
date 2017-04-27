@@ -1,0 +1,16 @@
+sudo: required
+dist: trusty
+
+language: julia
+
+notifications:
+  email: false
+
+os:
+  - linux
+
+julia:
+  - nightly
+
+after_success:
+  - julia -e 'cd(Pkg.dir("Primme")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
