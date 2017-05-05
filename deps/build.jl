@@ -1,5 +1,5 @@
 # Use this version of Elemental
-ver = "56b6d0838b09718206ce1f33e163ce6486bcb086" # v2.1
+ver = "5a875b4f51feefdc9dbfa3fe9d94ec93d098d0b6" # v2.1
 
 if is_windows()
     error("Primme.jl only works on Unix Platforms")
@@ -10,7 +10,7 @@ depdir = dirname(@__FILE__)
 srcdir = joinpath(depdir, "primme")
 
 if !isdir(srcdir)
-    LibGit2.clone("https://github.com/andreasnoack/primme.git", "$srcdir") # Use my fork until Makefile has been fixed
+    LibGit2.clone("https://github.com/primme/primme.git", "$srcdir") # Use my fork until Makefile has been fixed
     # LibGit2.clone("https://github.com/primme/primme.git", "$srcdir")
 end
 cd(srcdir) do
