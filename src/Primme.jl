@@ -4,39 +4,39 @@ const libprimme = joinpath(dirname(@__FILE__()), "../deps/primme/lib/libprimme")
 
 const PRIMME_INT = Int # might be wrong. Should be detected.
 
-@enum(primme_target,
-    primme_smallest,        # leftmost eigenvalues */
-    primme_largest,         # rightmost eigenvalues */
-    primme_closest_geq,     # leftmost but greater than the target shift */
-    primme_closest_leq,     # rightmost but less than the target shift */
-    primme_closest_abs,     # the closest to the target shift */
-    primme_largest_abs      # the farthest to the target shift */
+@enum(Target,
+    smallest,        # leftmost eigenvalues */
+    largest,         # rightmost eigenvalues */
+    closest_geq,     # leftmost but greater than the target shift */
+    closest_leq,     # rightmost but less than the target shift */
+    closest_abs,     # the closest to the target shift */
+    largest_abs      # the farthest to the target shift */
 )
 
-@enum(primme_init,         # Initially fill up the search subspace with: */
-    primme_init_default,
-    primme_init_krylov, # a) Krylov with the last vector provided by the user or random */
-    primme_init_random, # b) just random vectors */
-    primme_init_user    # c) provided vectors or a single random vector */
+@enum(Init,         # Initially fill up the search subspace with: */
+    init_default,
+    init_krylov, # a) Krylov with the last vector provided by the user or random */
+    init_random, # b) just random vectors */
+    init_user    # c) provided vectors or a single random vector */
 )
 
-@enum(primme_projection,
-    primme_proj_default,
-    primme_proj_RR,          # Rayleigh-Ritz */
-    primme_proj_harmonic,    # Harmonic Rayleigh-Ritz */
-    primme_proj_refined      # refined with fixed target */
+@enum(Projection,
+    proj_default,
+    proj_RR,          # Rayleigh-Ritz */
+    proj_harmonic,    # Harmonic Rayleigh-Ritz */
+    proj_refined      # refined with fixed target */
 )
-const C_projection_params = primme_projection
+const C_projection_params = Projection
 
-@enum(primme_restartscheme,
-    primme_thick,
-    primme_dtr
+@enum(Restartscheme,
+    thick,
+    dtr
 )
 
 abstract type PrimmeCStruct end
 
 struct C_restarting_params <: PrimmeCStruct
-    scheme::primme_restartscheme
+    scheme::Restartscheme
     maxPrevRetain::Cint
 end
 
@@ -49,11 +49,11 @@ struct JD_projectors
     SkewX::Cint
 end
 
-@enum(primme_convergencetest,
-    primme_full_LTolerance,
-    primme_decreasing_LTolerance,
-    primme_adaptive_ETolerance,
-    primme_adaptive
+@enum(Convergencetest,
+    full_LTolerance,
+    decreasing_LTolerance,
+    adaptive_ETolerance,
+    adaptive
 )
 
 struct C_correction_params <: PrimmeCStruct
@@ -61,11 +61,11 @@ struct C_correction_params <: PrimmeCStruct
     robustShifts::Cint
     maxInnerIterations::Cint
     projectors::JD_projectors
-    convTest::primme_convergencetest
+    convTest::Convergencetest
     relTolBase::Cdouble
 end
 
-struct C_primme_stats <: PrimmeCStruct
+struct C_stats <: PrimmeCStruct
     numOuterIterations::PRIMME_INT
     numRestarts::PRIMME_INT
     numMatvecs::PRIMME_INT
@@ -85,7 +85,7 @@ struct C_primme_stats <: PrimmeCStruct
     estimateResidualError::Cdouble   # accumulated error in V and W
 end
 
-struct C_primme_params <: PrimmeCStruct
+struct C_params <: PrimmeCStruct
 
     # The user must input at least the following two arguments
     n::PRIMME_INT
@@ -116,9 +116,9 @@ struct C_primme_params <: PrimmeCStruct
        # (void *sendBuf, void *recvBuf, int *count, struct primme_params *primme,
         # int *ierr );
 
-    # Though primme_initialize will assign defaults, most users will set these
+    # Though Initialize will assign defaults, most users will set these
     numEvals::Cint
-    target::primme_target
+    target::Target
     numTargetShifts::Cint             # For targeting interior epairs,
     targetShifts::Ptr{Cdouble}        # at least one shift must also be set
 
@@ -146,14 +146,14 @@ struct C_primme_params <: PrimmeCStruct
     matrix::Ptr{Void}
     preconditioner::Ptr{Void}
     ShiftsForPreconditioner::Ptr{Cdouble}
-    initBasisMode::primme_init
+    initBasisMode::Init
     ldevecs::PRIMME_INT
     ldOPs::PRIMME_INT
 
     projectionParams::C_projection_params
     restartingParams::C_restarting_params
     correctionParams::C_correction_params
-    stats::C_primme_stats
+    stats::C_stats
 
     convTestFun::Ptr{Void}
     # void (*convTestFun)(double *eval, void *evec, double *rNorm, int *isconv, 
@@ -168,20 +168,20 @@ struct C_primme_params <: PrimmeCStruct
     monitor::Ptr{Void}
 end
 
-@enum(primme_svds_target,
-    primme_svds_largest,
-    primme_svds_smallest,
-    primme_svds_closest_abs
+@enum(Svds_target,
+    svds_largest,
+    svds_smallest,
+    svds_closest_abs
 )
 
-@enum(primme_svds_operator,
-    primme_svds_op_none,
-    primme_svds_op_AtA,
-    primme_svds_op_AAt,
-    primme_svds_op_augmented
+@enum(Svds_operator,
+    svds_op_none,
+    svds_op_AtA,
+    svds_op_AAt,
+    svds_op_augmented
 )
 
-struct C_primme_svds_stats <: PrimmeCStruct
+struct C_svds_stats <: PrimmeCStruct
     numOuterIterations::PRIMME_INT
     numRestarts::PRIMME_INT
     numMatvecs::PRIMME_INT
@@ -196,11 +196,11 @@ struct C_primme_svds_stats <: PrimmeCStruct
     timeGlobalSum::Cdouble           # time expend by globalSumReal
 end
 
-struct C_primme_svds_params <: PrimmeCStruct
+struct C_svds_params <: PrimmeCStruct
     # Low interface: configuration for the eigensolver
-    primme::C_primme_params # Keep it as first field to access primme_svds_params from
+    primme::C_params # Keep it as first field to access primme_svds_params from
                           # primme_params
-    primmeStage2::C_primme_params # other primme_params, used by hybrid
+    primmeStage2::C_params # other primme_params, used by hybrid
 
     # Specify the size of the rectangular matrix A
     m::PRIMME_INT # number of rows
@@ -229,11 +229,11 @@ struct C_primme_svds_params <: PrimmeCStruct
 
     # Though primme_svds_initialize will assign defaults, most users will set these
     numSvals::Cint
-    target::primme_svds_target
+    target::Svds_target
     numTargetShifts::Cint  # For primme_svds_augmented method, user has to
     targetShifts::Ptr{Cdouble} # make sure  at least one shift must also be set
-    method::primme_svds_operator # one of primme_svds_AtA, primme_svds_AAt or primme_svds_augmented
-    methodStage2::primme_svds_operator # hybrid second stage method; accepts the same values as method */
+    method::Svds_operator # one of primme_svds_AtA, primme_svds_AAt or primme_svds_augmented
+    methodStage2::Svds_operator # hybrid second stage method; accepts the same values as method */
 
     # These pointers are not for users but for d/zprimme_svds function
     intWorkSize::Cint
@@ -259,7 +259,7 @@ struct C_primme_svds_params <: PrimmeCStruct
     iseed::NTuple{4,PRIMME_INT}
     printLevel::Cint
     outputFile::Ptr{Void}
-    stats::C_primme_svds_stats
+    stats::C_svds_stats
 
     monitorFun::Ptr{Void}
     # void (*monitorFun)(void *basisSvals, int *basisSize, int *basisFlags,
@@ -273,11 +273,11 @@ end
 
 # Julia API
 
-free(r::Ref{C_primme_svds_params}) = ccall((:primme_svds_free, libprimme), Void, (Ptr{C_primme_svds_params},), r)
+free(r::Ref{C_svds_params}) = ccall((:primme_svds_free, libprimme), Void, (Ptr{C_svds_params},), r)
 
 function svds_initialize()
-    r = Ref{C_primme_svds_params}()
-    ccall((:primme_svds_initialize, libprimme), Void, (Ptr{C_primme_svds_params},), r)
+    r = Ref{C_svds_params}()
+    ccall((:primme_svds_initialize, libprimme), Void, (Ptr{C_svds_params},), r)
     finalizer(r, free)
     return r
 end
@@ -301,9 +301,9 @@ function matrixMatvec(xp, ldxp, yp, ldyp, blockSizep, trp, parp, ierrp)
 end
 _fp_ = cfunction(matrixMatvec, Void,
         (Ptr{Float64}, Ptr{Int}, Ptr{Float64}, Ptr{Int}, Ptr{Cint}, Ptr{Cint},
-         Ptr{C_primme_svds_params}, Ptr{Cint}))
+         Ptr{C_svds_params}, Ptr{Cint}))
 
-_print(r::Ref{C_primme_svds_params}) = ccall((:primme_svds_display_params, libprimme), Void, (C_primme_svds_params,), r[])
+_print(r::Ref{C_svds_params}) = ccall((:primme_svds_display_params, libprimme), Void, (C_svds_params,), r[])
 
 function Base.setindex!(r::Ref{T}, x, sym::Symbol) where T<:PrimmeCStruct
     p  = Base.unsafe_convert(Ptr{T}, r)
@@ -318,14 +318,14 @@ function Base.setindex!(r::Ref{T}, x, sym::Symbol) where T<:PrimmeCStruct
     return x
 end
 
-function _svds(r::Ref{C_primme_svds_params})
+function _svds(r::Ref{C_svds_params})
     m, n, k = r[].m, r[].n, r[].numSvals
     svals  = Vector{Float64}(k)
     svecs  = rand(Float64, m + n, k)
     rnorms = Vector{Float64}(k)
 
     err = ccall((:dprimme_svds, libprimme), Cint,
-        (Ptr{Float64}, Ptr{Float64}, Ptr{Float64}, Ptr{C_primme_svds_params}),
+        (Ptr{Float64}, Ptr{Float64}, Ptr{Float64}, Ptr{C_svds_params}),
          svals, svecs, rnorms, r)
     if err != 0
         warn("err = $err")
@@ -348,7 +348,7 @@ function svds(A::AbstractMatrix, k = 5; tol = 1e-12, maxBlockSize = 2k, debuglev
     r[:printLevel]   = debuglevel
     r[:eps]          = tol
     r[:maxBlockSize] = maxBlockSize
-    r[:method]       = primme_svds_op_AtA
+    r[:method]       = svds_op_AtA
     if debuglevel > 0
         _print(r)
     end
