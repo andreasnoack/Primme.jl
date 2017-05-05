@@ -292,9 +292,9 @@ function matrixMatvec(xp, ldxp, yp, ldyp, blockSizep, trp, parp, ierrp)
     x, y = unsafe_wrap(Array, xp, (ldx, blockSize)), unsafe_wrap(Array, yp, (ldy, blockSize))
 
     if tr == 0
-        A_mul_B!( y, _A_[], x)
+        A_mul_B!( view(y, 1:par.m, :), _A_[], view(x, 1:par.n, :))
     else
-        Ac_mul_B!(y, _A_[], x)
+        Ac_mul_B!(view(y, 1:par.n, :), _A_[], view(x, 1:par.m, :))
     end
     unsafe_store!(ierrp, 0)
     return nothing
@@ -338,7 +338,7 @@ function _svds(r::Ref{C_svds_params})
         reshape(svecs[(r[].numOrthoConst + nConv)*m + r[].numOrthoConst*n + (1:(n*nConv))], n, nConv)
 end
 
-function svds(A::AbstractMatrix, k = 5; tol = 1e-12, maxBlockSize = 2k, debuglevel::Int = 0)
+function svds(A::AbstractMatrix, k = 5; tol = 1e-12, maxBlockSize = 2k, debuglevel::Int = 0, method::Svds_operator = svds_op_AtA)
     r = svds_initialize()
     _A_[]            = A
     r[:m]            = size(A, 1)
@@ -348,7 +348,7 @@ function svds(A::AbstractMatrix, k = 5; tol = 1e-12, maxBlockSize = 2k, debuglev
     r[:printLevel]   = debuglevel
     r[:eps]          = tol
     r[:maxBlockSize] = maxBlockSize
-    r[:method]       = svds_op_AtA
+    r[:method]       = method
     if debuglevel > 0
         _print(r)
     end
